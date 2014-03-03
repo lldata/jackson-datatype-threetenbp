@@ -1,11 +1,21 @@
-Project: jackson-datatype-jsr310
+Project: jackson-datatype-threetenbp
 Version: 2.3.2 (01-Mar-2014)
 
-No functional changes.
+Fork of JSR310 Jackson module.
+Search replace to support org.threeten.bp instead of java.time
+Rewrite Java 8 code to Java 7, so the project can be compiled with Java 7.
+
+Beta version. Tests pass, but not battle tested yet.
+Should have about the same number of bugs as the forked project.
 
 ------------------------------------------------------------------------
 === History: ===
 ------------------------------------------------------------------------
+
+Project: jackson-datatype-jsr310
+Version: 2.3.2 (01-Mar-2014)
+
+No functional changes.
 
 2.3.1 (28-Dec-2013)
 2.3.0-rc1 (26-Oct-2013)
