@@ -36,15 +36,50 @@ import org.threeten.bp.temporal.Temporal;
 public abstract class InstantSerializer<T extends Temporal> extends ThreetenbpSerializerBase<T>
 {
     public static final InstantSerializer<Instant> INSTANT =
-            new InstantSerializer<>(Instant.class, Instant::toEpochMilli, Instant::getEpochSecond, Instant::getNano);
+            new InstantSerializer<Instant>(Instant.class) {
+                long getEpochMillis(Instant instant) {
+                    return instant.toEpochMilli();
+                }
+
+                long getEpochSeconds(Instant instant) {
+                    return instant.getEpochSecond();
+                }
+
+                int getNanoseconds(Instant instant) {
+                    return instant.getNano();
+                }
+            };
 
     public static final InstantSerializer<OffsetDateTime> OFFSET_DATE_TIME =
-            new InstantSerializer<>(OffsetDateTime.class, dt -> dt.toInstant().toEpochMilli(),
-                    OffsetDateTime::toEpochSecond, OffsetDateTime::getNano);
+            new InstantSerializer<OffsetDateTime>(OffsetDateTime.class) {
+                long getEpochMillis(OffsetDateTime dt) {
+                    return dt.toInstant().toEpochMilli();
+                }
+
+                long getEpochSeconds(OffsetDateTime dt) {
+                    return dt.toEpochSecond();
+                }
+
+                int getNanoseconds(OffsetDateTime dt) {
+                    return dt.getNano();
+                }
+            };
+
 
     public static final InstantSerializer<ZonedDateTime> ZONED_DATE_TIME =
-            new InstantSerializer<>(ZonedDateTime.class, dt -> dt.toInstant().toEpochMilli(),
-                    ZonedDateTime::toEpochSecond, ZonedDateTime::getNano);
+            new InstantSerializer<ZonedDateTime>(ZonedDateTime.class) {
+                long getEpochMillis(ZonedDateTime dt) {
+                    return dt.toInstant().toEpochMilli();
+                }
+
+                long getEpochSeconds(ZonedDateTime dt) {
+                    return dt.toEpochSecond();
+                }
+
+                int getNanoseconds(ZonedDateTime dt) {
+                    return dt.getNano();
+                }
+            };
 
     abstract long getEpochMillis(T t);
 
@@ -52,13 +87,9 @@ public abstract class InstantSerializer<T extends Temporal> extends ThreetenbpSe
 
     abstract int getNanoseconds(T t);
 
-    private InstantSerializer(Class<T> supportedType, ToLongFunction<T> getEpochMillis,
-                              ToLongFunction<T> getEpochSeconds, ToIntFunction<T> getNanoseconds)
+    private InstantSerializer(Class<T> supportedType)
     {
         super(supportedType);
-        this.getEpochMillis = getEpochMillis;
-        this.getEpochSeconds = getEpochSeconds;
-        this.getNanoseconds = getNanoseconds;
     }
 
     @Override
@@ -69,12 +100,12 @@ public abstract class InstantSerializer<T extends Temporal> extends ThreetenbpSe
             if(provider.isEnabled(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS))
             {
                 generator.writeNumber(DecimalUtils.toDecimal(
-                        this.getEpochSeconds.applyAsLong(instant), this.getNanoseconds.applyAsInt(instant)
+                        this.getEpochSeconds(instant), this.getNanoseconds(instant)
                 ));
             }
             else
             {
-                generator.writeNumber(this.getEpochMillis.applyAsLong(instant));
+                generator.writeNumber(this.getEpochMillis(instant));
             }
         }
         else

@@ -19,7 +19,7 @@ package com.fasterxml.jackson.datatype.threetenbp.ser;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.datatype.jsr310.DecimalUtils;
+import com.fasterxml.jackson.datatype.threetenbp.DecimalUtils;
 
 import java.io.IOException;
 import org.threeten.bp.Duration;

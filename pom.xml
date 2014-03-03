@@ -9,36 +9,50 @@
   </parent>
 
   <groupId>com.fasterxml.jackson.datatype</groupId>
-  <artifactId>jackson-datatype-jsr310</artifactId>
+  <artifactId>jackson-datatype-threetenbp</artifactId>
   <version>2.3.3-SNAPSHOT</version>
-  <name>Jackson-Datatype-JSR310</name>
+  <name>Jackson-Datatype-Threetenbp</name>
   <packaging>bundle</packaging>
-  <description>Add-on module to support JSR-310 (Java 8 Date &amp; Time API) data types.</description>
-  <url>http://wiki.fasterxml.com/JacksonModuleJSR310</url>
+  <description>Add-on module to support the threetenbp project (backport of JSR-310 Java 8 Date &amp; Time API) data types. This project is a fork of the Jackson-Datatype-JSR310, with different packagenames.</description>
+  <url>http://wiki.fasterxml.com/JacksonModuleThreetenbp</url>
 
   <developers>
     <developer>
-      <id>beamerblvd</id>
-      <name>Nick Williams</name>
-      <email>nicholas@nicholaswilliams.net</email>
-      <timezone>-6</timezone>
+      <id>lldata</id>
+      <name>Lasse Lindgård</name>
+      <email>lasse@lldata.dk</email>
+      <timezone>+1</timezone>
+    </developer>
+    <developer>
+        <id>beamerblvd</id>
+        <name>Nick Williams</name>
+        <email>nicholas@nicholaswilliams.net</email>
+        <timezone>-6</timezone>
     </developer>
   </developers>
 
+  <!-- This might as well be hosted as a module at FasterXML, if they want it.
   <scm>
-    <connection>scm:git:git@github.com:FasterXML/jackson-datatype-jsr310.git</connection>
-    <developerConnection>scm:git:git@github.com:FasterXML/jackson-datatype-jsr310.git</developerConnection>
-    <url>http://github.com/FasterXML/jackson-datatype-jsr310</url>    
+    <connection>scm:git:git@github.com:FasterXML/jackson-datatype-threetenbp.git</connection>
+    <developerConnection>scm:git:git@github.com:FasterXML/jackson-datatype-threetenbp.git</developerConnection>
+    <url>http://github.com/FasterXML/jackson-datatype-threetenbp</url>
     <tag>HEAD</tag>
   </scm>
+  -->
+    <scm>
+        <connection>scm:git:git@github.com:lldata/jackson-datatype-threetenbp.git</connection>
+        <developerConnection>scm:git:git@github.com:lldata/jackson-datatype-threetenbp.git</developerConnection>
+        <url>http://github.com/lldata/jackson-datatype-threetenbp</url>
+        <tag>HEAD</tag>
+    </scm>
 
   <properties>
     <version.jackson.core>2.3.2</version.jackson.core>
     <!-- Generate PackageVersion.java into this directory. -->
-    <packageVersion.dir>com/fasterxml/jackson/datatype/jsr310</packageVersion.dir>
-    <packageVersion.package>${project.groupId}.jsr310</packageVersion.package>
-    <javac.src.version>1.8</javac.src.version>
-    <javac.target.version>1.8</javac.target.version>
+    <packageVersion.dir>com/fasterxml/jackson/datatype/threetenbp</packageVersion.dir>
+    <packageVersion.package>${project.groupId}.threetenbp</packageVersion.package>
+    <javac.src.version>1.7</javac.src.version>
+    <javac.target.version>1.7</javac.target.version>
     <!-- Configuration properties for the OSGi maven-bundle-plugin -->
     <osgi.import>com.fasterxml.jackson.core
 ,com.fasterxml.jackson.core.util
@@ -49,7 +63,7 @@
 ,com.fasterxml.jackson.databind.node
 ,com.fasterxml.jackson.databind.ser.std
     </osgi.import>
-    <osgi.export>${project.groupId}.jsr310.*;version=${project.version}</osgi.export>
+    <osgi.export>${project.groupId}.threetenbp.*;version=${project.version}</osgi.export>
   </properties>
 
   <dependencies>
@@ -63,6 +77,12 @@
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
       <version>${version.jackson.core}</version>
+    </dependency>
+    <dependency>
+       <groupId>org.threeten</groupId>
+       <artifactId>threetenbp</artifactId>
+       <version>0.8.1</version>
+       <scope>provided</scope>
     </dependency>
 
     <!--  Test Dependencies -->
@@ -89,8 +109,8 @@
             <configuration>
               <rules>
                 <requireJavaVersion>
-                  <version>[1.8,)</version>
-                  <message>[ERROR] The currently supported version of Java is 1.8 or higher</message>
+                  <version>[1.7,)</version>
+                  <message>[ERROR] The currently supported version of Java is 1.7 or higher</message>
                 </requireJavaVersion>
                 <requireMavenVersion>
                   <version>[3.0,)</version>
@@ -139,7 +159,7 @@
             <Xmaxerrs>10000</Xmaxerrs>
             <Xmaxwarns>10000</Xmaxwarns>
             <Xlint />
-            <Werror />
+            <!--<Werror />-->
           </compilerArguments>
         </configuration>
       </plugin>

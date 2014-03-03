@@ -17,18 +17,17 @@
 package com.fasterxml.jackson.datatype.threetenbp.deser;
 
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.datatype.threetenbp.DecimalUtils;
-
-import java.io.IOException;
-import java.math.BigDecimal;
 import org.threeten.bp.Instant;
 import org.threeten.bp.OffsetDateTime;
 import org.threeten.bp.ZoneId;
 import org.threeten.bp.ZonedDateTime;
 import org.threeten.bp.temporal.Temporal;
+
+import java.io.IOException;
+import java.math.BigDecimal;
 
 /**
  * Deserializer for Java 8 temporal {@link Instant}s, {@link OffsetDateTime}, and {@link ZonedDateTime}s.
@@ -40,59 +39,79 @@ public abstract class InstantDeserializer<T extends Temporal> extends Threetenbp
 {
     private static final long serialVersionUID = 1L;
 
-    public static final InstantDeserializer INSTANT = new InstantDeserializer(Instant.class) {
-        Instant parse(CharSequence str) {
-            return Instant.parse(str);
-        }
-
-        Instant fromMilliseconds(long ms) {
-            return Instant.ofEpochMilli(ms);
-        }
-
-        Instant fromNanoseconds(FromDecimalArguments ns) {
-            return Instant.ofEpochSecond(ns.integer, ns.fraction);
-        }
-
-        Instant adjust(Instant ts, ZoneId zone) {
-            return ts;
-        }
-    };
-
-    public static final InstantDeserializer<OffsetDateTime> OFFSET_DATE_TIME = new InstantDeserializer(OffsetDateTime.class);
-
-    //    public static final InstantDeserializer<Instant> INSTANT = new InstantDeserializer<>(
-    //            Instant.class, Instant::parse,
-    //            a -> Instant.ofEpochMilli(a.value),
-    //            a -> Instant.ofEpochSecond(a.integer, a.fraction),
-    //            null
-    //    );
-
-//    public static final InstantDeserializer<OffsetDateTime> OFFSET_DATE_TIME = new InstantDeserializer<>(
-//            OffsetDateTime.class, OffsetDateTime::parse,
-//            a -> OffsetDateTime.ofInstant(Instant.ofEpochMilli(a.value), a.zoneId),
-//            a -> OffsetDateTime.ofInstant(Instant.ofEpochSecond(a.integer, a.fraction), a.zoneId),
-//            (d, z) -> d.withOffsetSameInstant(z.getRules().getOffset(d.toLocalDateTime()))
-//    );
-
-    public static final InstantDeserializer<ZonedDateTime> ZONED_DATE_TIME = new InstantDeserializer<>(
-            ZonedDateTime.class, ZonedDateTime::parse,
-            a -> ZonedDateTime.ofInstant(Instant.ofEpochMilli(a.value), a.zoneId),
-            a -> ZonedDateTime.ofInstant(Instant.ofEpochSecond(a.integer, a.fraction), a.zoneId),
-            ZonedDateTime::withZoneSameInstant
-    );
-
     abstract T parse(CharSequence str);
 
-    abstract T fromMilliseconds(long ms);
+    abstract T fromMilliseconds(FromIntegerArguments ms);
 
     abstract T fromNanoseconds(FromDecimalArguments ns);
 
     abstract T adjust(T t, ZoneId zone);
 
     private InstantDeserializer(Class<T> supportedType) {
-    {
         super(supportedType);
     }
+
+        public static final InstantDeserializer<Instant> INSTANT = new InstantDeserializer<Instant>(Instant.class) {
+        Instant parse(CharSequence str) {
+            return Instant.parse(str);
+        }
+
+        Instant fromMilliseconds(FromIntegerArguments ms) {
+            return Instant.ofEpochMilli(ms.value);
+        }
+
+        Instant fromNanoseconds(FromDecimalArguments ns) {
+            return Instant.ofEpochSecond(ns.integer, ns.fraction);
+        }
+
+        Instant adjust(Instant temporal, ZoneId zone) {
+            return temporal;
+        }
+    };
+
+    public static final InstantDeserializer<OffsetDateTime> OFFSET_DATE_TIME = new InstantDeserializer<OffsetDateTime>(OffsetDateTime.class) {
+        @Override
+        OffsetDateTime parse(CharSequence str) {
+            return OffsetDateTime.parse(str);
+        }
+
+        @Override
+        OffsetDateTime fromMilliseconds(FromIntegerArguments a) {
+            return OffsetDateTime.ofInstant(Instant.ofEpochMilli(a.value), a.zoneId);
+        }
+
+        @Override
+        OffsetDateTime fromNanoseconds(FromDecimalArguments a) {
+            return OffsetDateTime.ofInstant(Instant.ofEpochSecond(a.integer, a.fraction), a.zoneId);
+        }
+
+        @Override
+        OffsetDateTime adjust(OffsetDateTime d, ZoneId z) {
+            return d.withOffsetSameInstant(z.getRules().getOffset(d.toLocalDateTime()));
+        }
+    };
+
+    public static final InstantDeserializer<ZonedDateTime> ZONED_DATE_TIME = new InstantDeserializer<ZonedDateTime>(ZonedDateTime.class) {
+        @Override
+        ZonedDateTime parse(CharSequence str) {
+            return ZonedDateTime.parse(str);
+        }
+
+        @Override
+        ZonedDateTime fromMilliseconds(FromIntegerArguments a) {
+            return ZonedDateTime.ofInstant(Instant.ofEpochMilli(a.value), a.zoneId);
+        }
+
+        @Override
+        ZonedDateTime fromNanoseconds(FromDecimalArguments a) {
+            return ZonedDateTime.ofInstant(Instant.ofEpochSecond(a.integer, a.fraction), a.zoneId);
+        }
+
+        @Override
+        ZonedDateTime adjust(ZonedDateTime d, ZoneId z) {
+            return d.withZoneSameInstant(z);
+        }
+    };
 
     @Override
     public T deserialize(JsonParser parser, DeserializationContext context) throws IOException
@@ -105,20 +124,20 @@ public abstract class InstantDeserializer<T extends Temporal> extends Threetenbp
                 BigDecimal value = parser.getDecimalValue();
                 long seconds = value.longValue();
                 int nanoseconds = DecimalUtils.extractNanosecondDecimal(value, seconds);
-                return this.fromNanoseconds.apply(new FromDecimalArguments(
+                return this.fromNanoseconds(new FromDecimalArguments(
                         seconds, nanoseconds, this.getZone(context)
                 ));
 
             case VALUE_NUMBER_INT:
                 if(context.isEnabled(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS))
                 {
-                    return this.fromNanoseconds.apply(new FromDecimalArguments(
+                    return this.fromNanoseconds(new FromDecimalArguments(
                             parser.getLongValue(), 0, this.getZone(context)
                     ));
                 }
                 else
                 {
-                    return this.fromMilliseconds.apply(new FromIntegerArguments(
+                    return this.fromMilliseconds(new FromIntegerArguments(
                             parser.getLongValue(), this.getZone(context)
                     ));
                 }
@@ -128,8 +147,8 @@ public abstract class InstantDeserializer<T extends Temporal> extends Threetenbp
                 if(string.length() == 0)
                     return null;
                 if(context.isEnabled(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE))
-                    return this.adjust.apply(this.parse.apply(string), this.getZone(context));
-                return this.parse.apply(string);
+                    return this.adjust(this.parse(string), this.getZone(context));
+                return this.parse(string);
         }
         throw context.mappingException("Expected type float, integer, or string.");
     }
@@ -137,7 +156,7 @@ public abstract class InstantDeserializer<T extends Temporal> extends Threetenbp
     private ZoneId getZone(DeserializationContext context)
     {
         // Instants are always in UTC, so don't waste compute cycles
-        return this._valueClass == Instant.class ? null : context.getTimeZone().toZoneId();
+        return this._valueClass == Instant.class ? null : ZoneId.of(context.getTimeZone().getID());
     }
 
     private static class FromIntegerArguments
